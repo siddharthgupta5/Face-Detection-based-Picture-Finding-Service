@@ -6,8 +6,6 @@ UPLOAD_DIR  = BASE_DIR / "uploads"
 CHROMA_DIR  = BASE_DIR / "chroma_data"
 DB_PATH     = BASE_DIR / "share_links.db"
 
-# Face-embedding
-# Cosine distance threshold: hits with distance > this are discarded.
 # ChromaDB cosine distance = 1 - cosine_similarity  (range 0-1 for unit vectors).
 # 0.3 = very confident  |  0.45 = good  |  0.6 = loose  |  >0.6 = likely mismatch
 SIMILARITY_THRESHOLD: float = 0.25
