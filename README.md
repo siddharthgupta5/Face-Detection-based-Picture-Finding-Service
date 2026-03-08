@@ -142,7 +142,7 @@ All tuneable settings are in `app/config.py`:
 | `SIMILARITY_THRESHOLD` | `0.25` | Cosine distance cutoff — lower is stricter. Raise to `0.45`–`0.5` if too few results appear |
 | `TOP_K` | `50` | Max face vectors queried from ChromaDB before deduplication |
 | `LINK_TTL_SECONDS` | `172800` (48 h) | How long a shareable link remains valid |
-| `MAX_UPLOAD_BYTES` | `15728640` (15 MB) | Maximum file size per uploaded photo |
+| `MAX_UPLOAD_BYTES` | `10485760` (10 MB) | Maximum file size per uploaded photo |
 
 ---
 
