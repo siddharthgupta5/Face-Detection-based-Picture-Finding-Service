@@ -1,0 +1,77 @@
+# Python 
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+wheels/
+sdist/
+.eggs/
+pip-wheel-metadata/
+MANIFEST
+
+# Virtual environment
+myenv/
+venv/
+env/
+.venv/
+.env/
+ENV/
+
+# Environment-secrets 
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+
+# Runtime data — user-uploaded photos
+uploads/
+
+# ChromaDB vector store
+chroma_data/
+
+# SQLite database 
+*.db
+*.sqlite
+*.sqlite3
+
+# ML model weights cache
+*.pt
+*.pth
+*.onnx
+*.bin
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.Spotlight-V100
+.Trashes
+
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Test 
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
