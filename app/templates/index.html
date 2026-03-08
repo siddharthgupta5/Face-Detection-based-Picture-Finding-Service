@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhotoFinder</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f0f13;
+      color: #e8e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-bottom: 1px solid #2a2a4a;
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #6c63ff, #48bfe3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    header .tagline {
+      font-size: 0.85rem;
+      color: #888;
+    }
+    header .badge {
+      margin-left: auto;
+      background: #1e2a1e;
+      color: #4caf50;
+      border: 1px solid #2e5c2e;
+      border-radius: 20px;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.75rem;
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 880px;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 600px) { main { grid-template-columns: 1fr; } }
+
+    /* ── Cards ── */
+    .card {
+      background: #16162a;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 2rem;
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.4rem;
+      color: #c0c0e0;
+    }
+    .card p.sub {
+      font-size: 0.82rem;
+      color: #666;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      border: 2px dashed #3a3a6a;
+      border-radius: 12px;
+      padding: 2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: #6c63ff;
+      background: #1e1e35;
+    }
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .drop-zone .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .drop-zone .hint { font-size: 0.8rem; color: #666; margin-top: 0.4rem; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: block;
+      width: 100%;
+      margin-top: 1.2rem;
+      padding: 0.75rem 1rem;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: linear-gradient(90deg, #6c63ff, #48bfe3); color: #fff; }
+    .btn-search  { background: linear-gradient(90deg, #e040fb, #7c4dff); color: #fff; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Preview strip ── */
+    #preview-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 1rem;
+    }
+    #preview-strip img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #2a2a4a;
+    }
+
+    /* ── Selfie preview ── */
+    #selfie-preview {
+      display: none;
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      border-radius: 10px;
+      margin-top: 1rem;
+      border: 2px solid #3a3a6a;
+    }
+
+    /* ── Toast / progress ── */
+    #upload-status {
+      margin-top: 1rem;
+      font-size: 0.82rem;
+      min-height: 2rem;
+    }
+    .status-ok   { color: #4caf50; }
+    .status-err  { color: #f44336; }
+    .status-info { color: #888; }
+
+    /* ── Stats bar ── */
+    .stats {
+      grid-column: 1 / -1;
+      background: #16162a;
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.85rem;
+      color: #888;
+    }
+    .stats strong { color: #6c63ff; font-size: 1.1rem; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #444;
+      border-top-color: #6c63ff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">&#128247; PhotoFinder</div>
+  <div class="tagline">AI-powered face search for event photos</div>
+  <div class="badge">&#9679; Live</div>
+</header>
+
+<main>
+
+  <!-- Stats bar -->
+  <div class="stats">
+    &#128202;&nbsp;
+    <strong>{{ total_faces }}</strong>
+    face{{ 's' if total_faces != 1 else '' }} indexed across all event photos.
+    Upload more below to grow the collection.
+  </div>
+
+  <!-- ── Upload Card ── -->
+  <div class="card" id="upload-card">
+    <h2>&#128247; Upload Event Photos</h2>
+    <p class="sub">Photographer: upload all photos from the event. All faces are auto-indexed.</p>
+
+    <form id="upload-form" enctype="multipart/form-data">
+      <div class="drop-zone" id="upload-drop" role="button" aria-label="Click or drag event photos here">
+        <input type="file" name="files" id="upload-input" multiple accept="image/*" />
+        <div class="icon">&#128444;&#65039;</div>
+        <div>Click or drag photos here</div>
+        <div class="hint">JPEG, PNG, WEBP — multiple files accepted</div>
+      </div>
+
+      <div id="preview-strip"></div>
+
+      <button type="submit" class="btn btn-primary" id="upload-btn" disabled>
+        Index Photos
+      </button>
+    </form>
+
+    <div id="upload-status"></div>
+  </div>
+
+  <!-- ── Search Card ── -->
+  <div class="card" id="search-card">
+    <h2>&#128269; Find Your Photos</h2>
+    <p class="sub">Upload a clear selfie. We'll find all event photos containing your face.</p>
+
+    <form id="search-form" action="/search" method="post" enctype="multipart/form-data">
+      <div class="drop-zone" id="search-drop" role="button" aria-label="Click or drag your selfie here">
+        <input type="file" name="file" id="selfie-input" accept="image/*" required />
+        <div class="icon">&#129381;</div>
+        <div>Click or drag your selfie here</div>
+        <div class="hint">One face visible — frontal works best</div>
+      </div>
+
+      <img id="selfie-preview" src="" alt="selfie preview" />
+
+      <button type="submit" class="btn btn-search" id="search-btn" disabled>
+        Find My Photos
+      </button>
+    </form>
+  </div>
+
+</main>
+
+<script>
+  // ── Drop-zone drag styling ──────────────────────────────────────────────────
+  document.querySelectorAll('.drop-zone').forEach(zone => {
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop',      e => { e.preventDefault(); zone.classList.remove('drag-over'); });
+  });
+
+  // ── Upload form — preview thumbnails ──────────────────────────────────────
+  const uploadInput = document.getElementById('upload-input');
+  const uploadBtn   = document.getElementById('upload-btn');
+  const previewStrip = document.getElementById('preview-strip');
+  const uploadStatus = document.getElementById('upload-status');
+
+  uploadInput.addEventListener('change', () => {
+    previewStrip.innerHTML = '';
+    const files = Array.from(uploadInput.files);
+    uploadBtn.disabled = files.length === 0;
+
+    files.slice(0, 20).forEach(f => {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      img.onload = () => URL.revokeObjectURL(img.src);
+      previewStrip.appendChild(img);
+    });
+    if (files.length > 20) {
+      const more = document.createElement('span');
+      more.style.cssText = 'font-size:.75rem;color:#888;align-self:center';
+      more.textContent = `+${files.length - 20} more`;
+      previewStrip.appendChild(more);
+    }
+  });
+
+  // ── Upload form — AJAX POST ────────────────────────────────────────────────
+  document.getElementById('upload-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const files = Array.from(uploadInput.files);
+    if (!files.length) return;
+
+    uploadBtn.disabled = true;
+    uploadStatus.innerHTML = '<span class="spinner"></span><span class="status-info">Uploading and indexing…</span>';
+
+    const fd = new FormData();
+    files.forEach(f => fd.append('files', f));
+
+    try {
+      const res  = await fetch('/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+
+      const ok  = data.results.filter(r => r.status === 'indexed');
+      const err = data.results.filter(r => r.status === 'error');
+      const skipped = data.results.filter(r => r.status === 'skipped');
+
+      const totalFaces = ok.reduce((s, r) => s + (r.faces || 0), 0);
+
+      let msg = `<span class="status-ok">&#10003; ${ok.length} photo${ok.length !== 1 ? 's' : ''} indexed — ${totalFaces} face${totalFaces !== 1 ? 's' : ''} detected.</span>`;
+      if (err.length)     msg += `<br><span class="status-err">&#10007; ${err.length} error(s).</span>`;
+      if (skipped.length) msg += `<br><span class="status-info">${skipped.length} skipped (not images).</span>`;
+
+      uploadStatus.innerHTML = msg;
+      uploadInput.value = '';
+      previewStrip.innerHTML = '';
+      uploadBtn.disabled = true;
+
+      // Refresh stats badge
+      document.querySelector('.stats strong').textContent =
+        parseInt(document.querySelector('.stats strong').textContent) + totalFaces;
+    } catch (err) {
+      uploadStatus.innerHTML = `<span class="status-err">Upload failed: ${err.message}</span>`;
+      uploadBtn.disabled = false;
+    }
+  });
+
+  // ── Selfie preview ─────────────────────────────────────────────────────────
+  const selfieInput   = document.getElementById('selfie-input');
+  const selfiePreview = document.getElementById('selfie-preview');
+  const searchBtn     = document.getElementById('search-btn');
+
+  selfieInput.addEventListener('change', () => {
+    const file = selfieInput.files[0];
+    if (!file) return;
+    selfiePreview.src = URL.createObjectURL(file);
+    selfiePreview.style.display = 'block';
+    searchBtn.disabled = false;
+  });
+
+  // ── Search form — loading state ────────────────────────────────────────────
+  document.getElementById('search-form').addEventListener('submit', () => {
+    searchBtn.disabled = true;
+    searchBtn.innerHTML = '<span class="spinner"></span>Searching…';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — PhotoFinder</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f0f13;
+      color: #e8e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-bottom: 1px solid #2a2a4a;
+      padding: 1.2rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header a { text-decoration: none; }
+    header .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #6c63ff, #48bfe3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    header .tag {
+      background: #2a1e3a;
+      color: #b48aff;
+      border: 1px solid #4a2a6a;
+      border-radius: 20px;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    header .nav-home {
+      margin-left: auto;
+      color: #6c63ff;
+      text-decoration: none;
+      font-size: 0.88rem;
+    }
+    header .nav-home:hover { text-decoration: underline; }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1100px;
+      margin: 2.5rem auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ── Stats strip ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: #16162a;
+      border: 1px solid #2a2a4a;
+      border-radius: 14px;
+      padding: 1.4rem 1.6rem;
+    }
+    .stat-card .val {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #6c63ff, #48bfe3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+    .stat-card .lbl {
+      font-size: 0.82rem;
+      color: #888;
+      margin-top: 0.4rem;
+    }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 1rem;
+      color: #aaa;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* ── Empty state ── */
+    .empty {
+      background: #16162a;
+      border: 1px solid #2a2a4a;
+      border-radius: 14px;
+      padding: 3rem;
+      text-align: center;
+      color: #555;
+    }
+    .empty .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+
+    /* ── Photo grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .photo-card {
+      background: #16162a;
+      border: 1px solid #2a2a4a;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      transition: border-color .15s;
+    }
+    .photo-card:hover { border-color: #4a3a7a; }
+    .photo-card.deleting { opacity: 0.4; pointer-events: none; }
+
+    .photo-card img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      display: block;
+    }
+
+    .photo-card .card-body {
+      padding: 0.65rem 0.8rem;
+    }
+    .photo-card .photo-id {
+      font-size: 0.68rem;
+      color: #555;
+      font-family: monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 0.5rem;
+    }
+    .photo-card .actions {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .btn-view {
+      flex: 1;
+      padding: 0.4rem;
+      background: #1e1e3a;
+      border: 1px solid #3a3a6a;
+      border-radius: 7px;
+      color: #8888cc;
+      font-size: 0.75rem;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-view:hover { background: #2a2a5a; }
+
+    .btn-delete {
+      flex: 1;
+      padding: 0.4rem;
+      background: #2a1a1a;
+      border: 1px solid #5a2a2a;
+      border-radius: 7px;
+      color: #cc6666;
+      font-size: 0.75rem;
+      text-align: center;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-delete:hover { background: #3a1a1a; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #1e2a1e;
+      border: 1px solid #2e5c2e;
+      color: #4caf50;
+      border-radius: 10px;
+      padding: 0.8rem 1.4rem;
+      font-size: 0.85rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+      z-index: 50;
+    }
+    #toast.show { opacity: 1; }
+    #toast.error { background: #2a1a1a; border-color: #5a2a2a; color: #f88; }
+
+    /* ── Confirm modal ── */
+    #modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 99;
+      align-items: center;
+      justify-content: center;
+    }
+    #modal-bg.open { display: flex; }
+    .modal {
+      background: #1a1a2e;
+      border: 1px solid #3a3a6a;
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 380px;
+      width: 90%;
+      text-align: center;
+    }
+    .modal h3 { margin-bottom: 0.8rem; }
+    .modal p  { font-size: 0.85rem; color: #888; margin-bottom: 1.4rem; }
+    .modal-actions { display: flex; gap: 0.8rem; justify-content: center; }
+    .btn-cancel {
+      padding: 0.6rem 1.4rem;
+      background: #2a2a4a;
+      border: 1px solid #3a3a6a;
+      border-radius: 8px;
+      color: #aaa;
+      cursor: pointer;
+      font-size: 0.88rem;
+    }
+    .btn-confirm-delete {
+      padding: 0.6rem 1.4rem;
+      background: linear-gradient(90deg, #e53935, #b71c1c);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">&#128247; PhotoFinder</a>
+  <span class="tag">Admin</span>
+  <a href="/" class="nav-home">&#8592; Back to App</a>
+</header>
+
+<main class="container">
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="val">{{ total_photos }}</div>
+      <div class="lbl">Photos on disk</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">{{ total_faces }}</div>
+      <div class="lbl">Face vectors indexed</div>
+    </div>
+    <div class="stat-card" style="display:flex; flex-direction:column; justify-content:center;">
+      <a href="/" style="display:block; background:linear-gradient(90deg,#6c63ff,#48bfe3);
+        color:#fff; border-radius:10px; padding:.8rem; text-align:center;
+        text-decoration:none; font-weight:600; font-size:.88rem;">
+        &#128247; Upload More Photos
+      </a>
+    </div>
+  </div>
+
+  <!-- Photo grid -->
+  <div class="section-title">&#128444;&#65039; All Indexed Photos</div>
+
+  {% if not photos %}
+    <div class="empty">
+      <div class="icon">&#128193;</div>
+      <p>No photos have been uploaded yet.</p>
+    </div>
+  {% else %}
+    <div class="grid" id="photo-grid">
+      {% for photo in photos %}
+      <div class="photo-card" id="card-{{ photo.photo_id }}" data-id="{{ photo.photo_id }}">
+        <img src="/uploads/{{ photo.filename }}" alt="{{ photo.filename }}" loading="lazy" />
+        <div class="card-body">
+          <div class="photo-id" title="{{ photo.photo_id }}">{{ photo.photo_id[:18] }}&hellip;</div>
+          <div class="actions">
+            <a class="btn-view"
+               href="/uploads/{{ photo.filename }}"
+               target="_blank"
+               rel="noopener noreferrer">&#128065; View</a>
+            <button
+              class="btn-delete"
+              onclick="confirmDelete('{{ photo.photo_id }}', '{{ photo.filename }}')"
+            >&#128465; Delete</button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+</main>
+
+<!-- Confirm modal -->
+<div id="modal-bg">
+  <div class="modal">
+    <h3>&#128465; Delete Photo</h3>
+    <p id="modal-msg">Are you sure? This will remove the photo from disk and all its face vectors from the index.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm-delete" id="modal-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+  let _pendingId = null;
+
+  function confirmDelete(photoId, filename) {
+    _pendingId = photoId;
+    document.getElementById('modal-msg').textContent =
+      `Delete "${filename}"? This removes the photo and all its face vectors.`;
+    document.getElementById('modal-bg').classList.add('open');
+    document.getElementById('modal-confirm').onclick = () => doDelete(photoId);
+  }
+
+  function closeModal() {
+    document.getElementById('modal-bg').classList.remove('open');
+    _pendingId = null;
+  }
+
+  async function doDelete(photoId) {
+    closeModal();
+    const card = document.getElementById('card-' + photoId);
+    if (card) card.classList.add('deleting');
+
+    try {
+      const res = await fetch(`/photos/${photoId}`, { method: 'DELETE' });
+      if (res.ok) {
+        if (card) card.remove();
+        showToast('Photo deleted successfully.', false);
+        // Update stats
+        const val = document.querySelector('.stats-row .stat-card:first-child .val');
+        if (val) val.textContent = Math.max(0, parseInt(val.textContent) - 1);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.detail || 'Delete failed.', true);
+        if (card) card.classList.remove('deleting');
+      }
+    } catch (e) {
+      showToast('Network error: ' + e.message, true);
+      if (card) card.classList.remove('deleting');
+    }
+  }
+
+  function showToast(msg, isError) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = isError ? 'error show' : 'show';
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // Close modal on backdrop click
+  document.getElementById('modal-bg').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+</script>
+</body>
+</html>

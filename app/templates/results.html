@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search Results — PhotoFinder</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f0f13;
+      color: #e8e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-bottom: 1px solid #2a2a4a;
+      padding: 1.2rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header a { text-decoration: none; }
+    header .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #6c63ff, #48bfe3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* ── Content ── */
+    .container {
+      max-width: 1000px;
+      margin: 2.5rem auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ── Banner bar ── */
+    .banner {
+      background: #16162a;
+      border: 1px solid #2a2a4a;
+      border-radius: 14px;
+      padding: 1.4rem 1.8rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .banner .count {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #6c63ff, #48bfe3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .banner .label {
+      font-size: 0.95rem;
+      color: #aaa;
+    }
+    .banner-actions { margin-left: auto; display: flex; gap: 0.8rem; flex-wrap: wrap; }
+
+    /* ── Error box ── */
+    .error-box {
+      background: #2a1a1a;
+      border: 1px solid #5c2a2a;
+      border-radius: 14px;
+      padding: 2rem;
+      text-align: center;
+      color: #f88;
+    }
+    .error-box .icon { font-size: 3rem; margin-bottom: 1rem; }
+
+    /* ── Photo grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .photo-card {
+      background: #16162a;
+      border: 1px solid #2a2a4a;
+      border-radius: 14px;
+      overflow: hidden;
+      transition: transform .15s, border-color .15s;
+      cursor: pointer;
+      position: relative;
+    }
+    .photo-card:hover {
+      transform: translateY(-3px);
+      border-color: #6c63ff;
+    }
+
+    .photo-card img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      display: block;
+    }
+
+    .photo-card .card-footer {
+      padding: 0.6rem 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .photo-card .rank {
+      font-size: 0.72rem;
+      color: #666;
+    }
+    .photo-card .dl-btn {
+      font-size: 0.78rem;
+      color: #6c63ff;
+      text-decoration: none;
+      border: 1px solid #3a3a7a;
+      border-radius: 6px;
+      padding: 2px 8px;
+      transition: background .15s;
+    }
+    .photo-card .dl-btn:hover { background: #2a2a5a; }
+
+    /* ── Share bar ── */
+    .share-bar {
+      margin-top: 2rem;
+      background: #16162a;
+      border: 1px solid #2a2a4a;
+      border-radius: 14px;
+      padding: 1.4rem 1.8rem;
+    }
+    .share-bar h3 { margin-bottom: 0.8rem; font-size: 1rem; }
+    .share-row {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .share-row input {
+      flex: 1;
+      background: #0f0f18;
+      border: 1px solid #3a3a6a;
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+      color: #aaa;
+      font-size: 0.85rem;
+      outline: none;
+      min-width: 200px;
+    }
+    .copy-btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #6c63ff, #48bfe3);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .copy-btn:hover { opacity: 0.9; }
+
+    /* ── Back button ── */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: #6c63ff;
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 1.2rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    /* ── Lightbox ── */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.88);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 10px;
+      box-shadow: 0 0 60px rgba(108,99,255,.4);
+    }
+    #lightbox-close {
+      position: absolute;
+      top: 1.5rem; right: 1.5rem;
+      background: none; border: none;
+      color: #fff; font-size: 2rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .ttl-note { font-size: 0.78rem; color: #666; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">&#128247; PhotoFinder</a>
+</header>
+
+<main class="container">
+  <a href="/" class="back-link">&#8592; Back to search</a>
+
+  {% if error %}
+    <!-- ── Error state ── -->
+    <div class="error-box">
+      <div class="icon">&#128565;</div>
+      <p>{{ error }}</p>
+    </div>
+
+  {% elif not photo_ids %}
+    <!-- ── No results ── -->
+    <div class="error-box" style="background:#1a1a2a; border-color:#3a3a6a; color:#aaa">
+      <div class="icon">&#128269;</div>
+      <p>No matching photos found. The event photos may not have been uploaded yet,
+         or try a different selfie with a clearer view of your face.</p>
+    </div>
+
+  {% else %}
+    <!-- ── Results banner ── -->
+    <div class="banner">
+      <div>
+        <div class="count">{{ photo_ids | length }}</div>
+        <div class="label">photo{{ 's' if photo_ids | length != 1 else '' }} found containing your face</div>
+      </div>
+      <div class="banner-actions">
+        {% if link_id %}
+        <button class="copy-btn" onclick="copyShare()">
+          &#128279; Copy Share Link
+        </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── Photo grid ── -->
+    <div class="grid">
+      {% for i in range(photo_ids | length) %}
+      {% set fname = filenames[i] %}
+      <div class="photo-card" onclick="openLightbox('/uploads/{{ fname }}')">
+        <img
+          src="/uploads/{{ fname }}"
+          alt="Event photo {{ i + 1 }}"
+          loading="lazy"
+        />
+        <div class="card-footer">
+          <span class="rank">#{{ i + 1 }} best match</span>
+          <a
+            class="dl-btn"
+            href="/uploads/{{ fname }}"
+            download="{{ fname }}"
+            onclick="event.stopPropagation()"
+          >&#8659; Save</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- ── Share bar ── -->
+    {% if link_id %}
+    <div class="share-bar">
+      <h3>&#128279; Your shareable gallery link</h3>
+      <div class="share-row">
+        <input
+          type="text"
+          id="share-url"
+          value="{{ request.base_url }}share/{{ link_id }}"
+          readonly
+        />
+        <button class="copy-btn" id="copy-btn" onclick="copyShare()">Copy link</button>
+      </div>
+      <p class="ttl-note">&#9201; This link expires in 48 hours.</p>
+    </div>
+    {% endif %}
+
+  {% endif %}
+</main>
+
+<!-- ── Lightbox ── -->
+<div id="lightbox">
+  <button id="lightbox-close" onclick="closeLightbox()">&#10005;</button>
+  <img id="lightbox-img" src="" alt="Full size photo" />
+</div>
+
+<script>
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('open');
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.getElementById('lightbox-img').src = '';
+  }
+  document.getElementById('lightbox').addEventListener('click', function(e) {
+    if (e.target === this) closeLightbox();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+  function copyShare() {
+    const url = document.getElementById('share-url')?.value;
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('copy-btn');
+      if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = 'Copy link', 2000); }
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% if expired %}Link Expired{% else %}Shared Gallery{% endif %} — PhotoFinder</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f0f13;
+      color: #e8e8f0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-bottom: 1px solid #2a2a4a;
+      padding: 1.2rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header a { text-decoration: none; }
+    header .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #6c63ff, #48bfe3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 2.5rem auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ── Expired state ── */
+    .expired-box {
+      background: #1e1218;
+      border: 1px solid #5a2a3a;
+      border-radius: 16px;
+      padding: 3rem;
+      text-align: center;
+      max-width: 500px;
+      margin: 5rem auto;
+    }
+    .expired-box .icon { font-size: 3.5rem; margin-bottom: 1rem; }
+    .expired-box h2 { font-size: 1.4rem; margin-bottom: 0.7rem; color: #f88; }
+    .expired-box p  { font-size: 0.9rem; color: #888; line-height: 1.6; margin-bottom: 1.5rem; }
+    .home-btn {
+      display: inline-block;
+      padding: 0.7rem 1.6rem;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #6c63ff, #48bfe3);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    /* ── Gallery header band ── */
+    .gallery-header {
+      background: #16162a;
+      border: 1px solid #2a2a4a;
+      border-radius: 14px;
+      padding: 1.4rem 1.8rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .gallery-header .count {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #6c63ff, #48bfe3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .gallery-header .label { font-size: 0.9rem; color: #aaa; }
+    .gallery-header .own-link {
+      margin-left: auto;
+      font-size: 0.82rem;
+      color: #6c63ff;
+      text-decoration: none;
+    }
+    .gallery-header .own-link:hover { text-decoration: underline; }
+
+    /* ── Photo grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .photo-card {
+      background: #16162a;
+      border: 1px solid #2a2a4a;
+      border-radius: 14px;
+      overflow: hidden;
+      transition: transform .15s, border-color .15s;
+      cursor: pointer;
+    }
+    .photo-card:hover {
+      transform: translateY(-3px);
+      border-color: #6c63ff;
+    }
+    .photo-card img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-card .card-footer {
+      padding: 0.6rem 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .dl-btn {
+      font-size: 0.78rem;
+      color: #6c63ff;
+      text-decoration: none;
+      border: 1px solid #3a3a7a;
+      border-radius: 6px;
+      padding: 2px 8px;
+      transition: background .15s;
+    }
+    .dl-btn:hover { background: #2a2a5a; }
+
+    /* ── Lightbox ── */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.88);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 10px;
+      box-shadow: 0 0 60px rgba(108,99,255,.4);
+    }
+    #lightbox-close {
+      position: absolute;
+      top: 1.5rem; right: 1.5rem;
+      background: none; border: none;
+      color: #fff; font-size: 2rem;
+      cursor: pointer;
+    }
+
+    .watermark {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: 0.78rem;
+      color: #444;
+    }
+    .watermark a { color: #6c63ff; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">&#128247; PhotoFinder</a>
+</header>
+
+<main class="container">
+
+  {% if expired %}
+    <!-- ── Expired link ── -->
+    <div class="expired-box">
+      <div class="icon">&#8987;</div>
+      <h2>This link has expired</h2>
+      <p>
+        Shared gallery links are valid for <strong>48 hours</strong>.
+        This link has exceeded that window and is no longer accessible.
+      </p>
+      <a href="/" class="home-btn">&#128269; Find your photos again</a>
+    </div>
+
+  {% else %}
+    <!-- ── Gallery ── -->
+    <div class="gallery-header">
+      <div>
+        <div class="count">{{ photo_ids | length }}</div>
+        <div class="label">
+          shared photo{{ 's' if photo_ids | length != 1 else '' }}
+        </div>
+      </div>
+      <a href="/" class="own-link">&#128269; Find my own photos &rarr;</a>
+    </div>
+
+    <div class="grid">
+      {% for i in range(photo_ids | length) %}
+      {% set fname = filenames[i] %}
+      <div class="photo-card" onclick="openLightbox('/uploads/{{ fname }}')">
+        <img
+          src="/uploads/{{ fname }}"
+          alt="Shared photo {{ i + 1 }}"
+          loading="lazy"
+        />
+        <div class="card-footer">
+          <a
+            class="dl-btn"
+            href="/uploads/{{ fname }}"
+            download="{{ fname }}"
+            onclick="event.stopPropagation()"
+          >&#8659; Save</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <p class="watermark">
+      Shared via <a href="/">PhotoFinder</a> &mdash; links expire after 48 hours.
+    </p>
+  {% endif %}
+
+</main>
+
+<!-- ── Lightbox ── -->
+<div id="lightbox">
+  <button id="lightbox-close" onclick="closeLightbox()">&#10005;</button>
+  <img id="lightbox-img" src="" alt="" />
+</div>
+
+<script>
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('open');
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.getElementById('lightbox-img').src = '';
+  }
+  document.getElementById('lightbox').addEventListener('click', function(e) {
+    if (e.target === this) closeLightbox();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+</body>
+</html>
