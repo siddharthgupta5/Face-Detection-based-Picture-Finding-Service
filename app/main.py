@@ -151,10 +151,37 @@ async def search(request: Request, file: UploadFile = File(...)):
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Uploaded file must be an image.")
 
-    loop  = asyncio.get_running_loop()
-    image = Image.open(file.file)
+    loop = asyncio.get_running_loop()
 
-    faces = await loop.run_in_executor(None, detect_and_embed, image)
+    try:
+        image = Image.open(file.file)
+        image.load()  # Force decode now — surfaces truncated/corrupt JPEG errors early
+    except Exception:
+        return templates.TemplateResponse(
+            "results.html",
+            {
+                "request":   request,
+                "photo_ids": [],
+                "filenames": [],
+                "link_id":   None,
+                "error":     "Could not read the uploaded image. "
+                             "Please try a different file.",
+            },
+        )
+
+    try:
+        faces = await loop.run_in_executor(None, detect_and_embed, image)
+    except Exception:
+        return templates.TemplateResponse(
+            "results.html",
+            {
+                "request":   request,
+                "photo_ids": [],
+                "filenames": [],
+                "link_id":   None,
+                "error":     "Face detection failed. Please try a clearer photo.",
+            },
+        )
 
     if not faces:
         return templates.TemplateResponse(
