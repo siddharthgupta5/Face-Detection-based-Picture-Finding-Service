@@ -7,9 +7,9 @@ Photographers upload all event photos; guests upload a selfie and instantly rece
 
 ## How It Works
 
-1. **Photographer uploads photos** → MTCNN detects every face in every photo → each face is converted to a 512-dimensional embedding and stored in ChromaDB
-2. **Guest uploads a selfie** → the dominant face is embedded → ChromaDB finds all similar face vectors across every indexed photo → results are deduplicated by photo
-3. **Shareable link** → a UUID link is generated pointing to the matched gallery, valid for 48 hours
+1. **Photographer uploads photos** => MTCNN detects every face in every photo => each face is converted to a 512-dimensional embedding and stored in ChromaDB
+2. **Guest uploads a selfie** => MTCNN detects every face in and they are converted to embeddings => ChromaDB finds all similar face vectors across every indexed photo => results are deduplicated by photo
+3. **Shareable link** - a UUID link is generated pointing to the matched gallery, valid for 48 hours
 
 ---
 
@@ -38,7 +38,7 @@ Photographers upload all event photos; guests upload a selfie and instantly rece
 ### 1. Clone or download the project
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/siddharthgupta5/Face-Detection-based-Picture-Finding-Service.git
 cd photo_finder
 ```
 
@@ -97,17 +97,6 @@ INFO:     Uvicorn running at http://127.0.0.1:8000 (Press CTRL+C to quit)
 
 Open **http://127.0.0.1:8000** in your browser.
 
-### Optional flags
-
-```bash
-# Custom host and port
-python run.py --host 0.0.0.0 --port 8080
-
-# Auto-reload on code changes (development)
-python run.py --reload
-```
-
----
 
 ## Pages & Endpoints
 
@@ -116,9 +105,7 @@ python run.py --reload
 | `http://127.0.0.1:8000/` | Main page — upload event photos or search with a selfie |
 | `http://127.0.0.1:8000/admin` | Admin dashboard — view all indexed photos, delete individual photos |
 | `http://127.0.0.1:8000/share/{id}` | Shared gallery link (expires 48 hours after creation) |
-| `http://127.0.0.1:8000/health` | JSON health check — shows number of indexed face vectors |
 | `http://127.0.0.1:8000/api/photos` | JSON list of all photos on disk |
-| `http://127.0.0.1:8000/docs` | Auto-generated OpenAPI / Swagger UI |
 
 ---
 
